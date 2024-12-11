@@ -68,6 +68,18 @@ type Config struct {
 	// from the job (the kubernetes "plugin" in pipeline.yml). If enabled,
 	// jobs with a "kubernetes" plugin will fail.
 	ProhibitKubernetesPlugin bool `json:"prohibit-kubernetes-plugin" validate:"omitempty"`
+
+	// AllowPodSpecPatchCmdMod can be used to allow podSpecPatch to change
+	// container commands. Normally this is prevented, because if the
+	// replacement command does not execute buildkite-agent in the right way,
+	// then:
+	//  - the agent container will not have the expected number of other
+	//    containers connecting to it, so will not finish the job normally
+	//  - logs from the container will not be visible on Buildkite
+	//  - plugins will not be checked out or executed
+	//  - hooks will not be executed
+	// and all the other things buildkite-agent bootstrap performs.
+	AllowPodSpecPatchCmdMod bool `json:"allow-pod-spec-patch-command-modification" validate:"omitempty"`
 }
 
 type stringSlice []string

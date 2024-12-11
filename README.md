@@ -553,6 +553,43 @@ steps:
   command: echo Hello World!
 ```
 
+#### Overriding commands
+
+By default, PodSpecPatch is prevented from modifying a container's `command` or
+`args`. If this is something you want to do, first consider other potential
+ways to accomplish what you are trying to do:
+
+* To override checkout behaviour, consider writing a `checkout` hook, or
+  disabling the checkout container entirely with `checkout: skip: true`.
+* To run additional containers without `buildkite-agent` in them, consider using
+  a sidecar.
+
+We are continually investigating ways to make the stack more flexible while
+preserving the core functionality.
+
+> [!CAUTION]
+> Avoid PodSpecPatch to override `command` or `args`. Such modifications,
+> if not done with extreme care and detailed knowledge about how agent-stack-k8s
+> constructs podspecs, are very likely to break how the agent within the pod
+> works.
+>
+> In short, if the replacement command for a checkout or command container does
+> not invoke `buildkite-agent bootstrap`:
+>  * the container will not connect to the agent "server" container, and the
+>    agent will not finish the job normally because there was not an expected
+>    number of other containers connecting to it
+>  * logs from the container will not be visible in Buildkite
+>  * hooks will not be executed
+>  * plugins will not be checked out or executed
+> and various other things provided by `buildkite-agent bootstrap`.
+> If the command for the `agent` container is overridden, and the replacement
+> command does not execute `buildkite-agent start`, then the job will not be
+> acquired on Buildkite.
+
+If you wish to disable this precaution, and override the `command` or `args` of
+your containers using PodSpecPatch, you may do so with the
+`allow-pod-spec-patch-command-modification` config option.
+
 ### Sidecars
 
 Sidecar containers can be added to your job by specifying them under the top-level `sidecars` key. See [this example](internal/integration/fixtures/sidecars.yaml) for a simple job that runs `nginx` as a sidecar, and accesses the nginx server from the main job.
